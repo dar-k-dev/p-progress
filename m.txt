@@ -1,0 +1,1 @@
+pages are not autosized for it's entire contents to match the screen, they go beyong the screen and makes those part outside the screen view inaccessable. fix these issues o

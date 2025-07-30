@@ -1,0 +1,57 @@
+{
+  "general": {
+    "name": "ProgressPulse",
+    "description": "Smart Progress Tracker",
+    "version": "1.0.0",
+    "orientation": "portrait"
+  },
+  "android": {
+    "package": "com.progresspulse.app",
+    "versionCode": 1,
+    "minSdkVersion": 21,
+    "targetSdkVersion": 34,
+    "permissions": [
+      "android.permission.INTERNET",
+      "android.permission.ACCESS_NETWORK_STATE",
+      "android.permission.WAKE_LOCK",
+      "android.permission.VIBRATE",
+      "android.permission.RECEIVE_BOOT_COMPLETED"
+    ]
+  },
+  "ios": {
+    "bundleId": "com.progresspulse.app",
+    "version": "1.0.0",
+    "buildNumber": 1,
+    "minimumOSVersion": "12.0"
+  },
+  "push": {
+    "enabled": true,
+    "firebase": {
+      "apiKey": "AIzaSyBPE9kaWcLofrUh_dT_pswPDNkEhVtSBjU",
+      "authDomain": "progresspulse-5c1c9.firebaseapp.com",
+      "projectId": "progresspulse-5c1c9",
+      "storageBucket": "progresspulse-5c1c9.firebasestorage.app",
+      "messagingSenderId": "1020367919471",
+      "appId": "1:1020367919471:web:245125af8144bac9e3b09a"
+    }
+  },
+  "webview": {
+    "enableZoom": false,
+    "enableScrollBounce": false,
+    "enablePullToRefresh": true,
+    "userAgent": "ProgressPulse/1.0.0 Median"
+  },
+  "navigation": {
+    "tabNavigation": {
+      "enabled": false
+    },
+    "sidebarNavigation": {
+      "enabled": false
+    }
+  },
+  "styling": {
+    "statusBarStyle": "default",
+    "statusBarBackgroundColor": "#3B82F6",
+    "navigationBarStyle": "default"
+  }
+}

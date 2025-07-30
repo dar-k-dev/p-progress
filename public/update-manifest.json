@@ -1,0 +1,18 @@
+{
+  "version": "1.0.3",
+  "timestamp": "2025-07-30T18:39:15.154Z",
+  "changes": [
+    "Performance improvements and bug fixes",
+    "Enhanced iPhone-style animations",
+    "Improved user experience"
+  ],
+  "downloadUrl": "/updates/1.0.3",
+  "size": 3558792,
+  "critical": false,
+  "rollout": {
+    "percentage": 100,
+    "regions": [
+      "all"
+    ]
+  }
+}
