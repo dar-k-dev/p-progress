@@ -9,6 +9,22 @@ export class BiometricService {
   }
 
   async isSupported(): Promise<boolean> {
+    console.log('🔐 Checking biometric support...');
+    
+    // Check for WebAuthn support first (works in modern browsers and some APKs)
+    if ('credentials' in navigator && 'create' in navigator.credentials) {
+      try {
+        // Check if platform authenticator is available
+        const available = await (navigator.credentials as any).isUserVerifyingPlatformAuthenticatorAvailable?.();
+        if (available) {
+          console.log('🔐 WebAuthn platform authenticator available');
+          return true;
+        }
+      } catch (error) {
+        console.log('🔐 WebAuthn check failed:', error);
+      }
+    }
+    
     // Detect APK environment
     const userAgent = navigator.userAgent.toLowerCase();
     const isAPK = userAgent.includes('wv') || 
@@ -18,68 +34,41 @@ export class BiometricService {
                   !!(window as any).cordova ||
                   window.matchMedia('(display-mode: standalone)').matches;
     
-    console.log('🔐 Biometric detection:', { isAPK, userAgent });
+    console.log('🔐 Environment detection:', { isAPK, userAgent });
     
-    // For APK environments, check multiple methods
+    // For APK environments, check native methods
     if (isAPK) {
-      // Method 1: Check for Capacitor biometric plugin
+      // Check for Capacitor biometric plugin
       if ((window as any).Capacitor && (window as any).BiometricAuth) {
         console.log('🔐 Capacitor biometric available');
         return true;
       }
       
-      // Method 2: Check for Cordova fingerprint plugin
+      // Check for Cordova fingerprint plugin
       if ((window as any).cordova && (window as any).FingerprintAuth) {
         console.log('🔐 Cordova fingerprint available');
         return true;
       }
       
-      // Method 3: Check for Android biometric API
-      if ((window as any).AndroidBiometric) {
-        console.log('🔐 Android biometric API available');
-        return true;
-      }
-      
-      // Method 4: WebAuthn in APK (may work in some APK builders)
-      if ('credentials' in navigator && 'create' in navigator.credentials) {
-        try {
-          const available = await (navigator.credentials as any).isUserVerifyingPlatformAuthenticatorAvailable?.();
-          if (available) {
-            console.log('🔐 WebAuthn available in APK');
-            return true;
-          }
-        } catch (error) {
-          console.log('🔐 WebAuthn not available in APK:', error);
-        }
-      }
-      
-      // For APK, always return true and fallback to PIN
-      console.log('🔐 APK detected - enabling PIN fallback');
+      // For APK, always return true (PIN fallback available)
+      console.log('🔐 APK detected - biometric/PIN available');
       return true;
     }
     
-    // For web browsers
-    if (!('credentials' in navigator) || !('create' in navigator.credentials)) {
-      return false;
-    }
-    
-    // Check for platform authenticator (fingerprint/face)
-    try {
-      const available = await (navigator.credentials as any).isUserVerifyingPlatformAuthenticatorAvailable?.();
-      return available === true;
-    } catch {
-      // Fallback for older browsers
-      return 'credentials' in navigator && 'create' in navigator.credentials;
-    }
+    // For web browsers, require WebAuthn
+    console.log('🔐 Web browser - checking WebAuthn...');
+    return 'credentials' in navigator && 'create' in navigator.credentials;
   }
 
   async setupFingerprint(userId: string): Promise<{ success: boolean; error?: string }> {
     try {
+      console.log('🔐 Setting up biometric authentication for:', userId);
+      
       if (!await this.isSupported()) {
         return { success: false, error: 'Biometric authentication not supported' };
       }
 
-      // Detect APK environment
+      // Detect environment
       const userAgent = navigator.userAgent.toLowerCase();
       const isAPK = userAgent.includes('wv') || 
                     userAgent.includes('pwabuilder') || 
@@ -88,17 +77,22 @@ export class BiometricService {
                     !!(window as any).cordova ||
                     window.matchMedia('(display-mode: standalone)').matches;
 
-      // Try APK-specific biometric methods first
+      // Try APK-specific methods first
       if (isAPK) {
-        // Method 1: Capacitor Biometric
+        console.log('🔐 APK environment detected, trying native methods...');
+        
+        // Capacitor Biometric
         if ((window as any).Capacitor && (window as any).BiometricAuth) {
           try {
+            console.log('🔐 Trying Capacitor biometric...');
             const result = await (window as any).BiometricAuth.isAvailable();
             if (result.isAvailable) {
               localStorage.setItem(`biometric_${userId}`, JSON.stringify({
                 method: 'capacitor',
-                enabled: true
+                enabled: true,
+                setupTime: Date.now()
               }));
+              console.log('🔐 Capacitor biometric setup successful');
               return { success: true };
             }
           } catch (error) {
@@ -106,167 +100,205 @@ export class BiometricService {
           }
         }
         
-        // Method 2: Cordova Fingerprint
+        // Cordova Fingerprint
         if ((window as any).cordova && (window as any).FingerprintAuth) {
           try {
+            console.log('🔐 Trying Cordova fingerprint...');
             await new Promise((resolve, reject) => {
               (window as any).FingerprintAuth.isAvailable((result: any) => {
                 if (result.isAvailable) {
-                  localStorage.setItem(`biometric_${userId}`, JSON.stringify({
-                    method: 'cordova',
-                    enabled: true
-                  }));
                   resolve(true);
                 } else {
                   reject(new Error('Fingerprint not available'));
                 }
               }, reject);
             });
+            
+            localStorage.setItem(`biometric_${userId}`, JSON.stringify({
+              method: 'cordova',
+              enabled: true,
+              setupTime: Date.now()
+            }));
+            console.log('🔐 Cordova fingerprint setup successful');
             return { success: true };
           } catch (error) {
             console.log('🔐 Cordova fingerprint setup failed:', error);
           }
         }
-        
-        // Method 3: Android Biometric API
-        if ((window as any).AndroidBiometric) {
-          try {
-            const available = await (window as any).AndroidBiometric.isAvailable();
-            if (available) {
-              localStorage.setItem(`biometric_${userId}`, JSON.stringify({
-                method: 'android',
-                enabled: true
-              }));
-              return { success: true };
-            }
-          } catch (error) {
-            console.log('🔐 Android biometric setup failed:', error);
-          }
-        }
       }
 
-      // Fallback to WebAuthn for web and some APK environments
+      // WebAuthn for web browsers and compatible APKs
       if ('credentials' in navigator && 'create' in navigator.credentials) {
-        // Generate random challenge
-        const challenge = crypto.getRandomValues(new Uint8Array(32));
-        
-        const credential = await navigator.credentials.create({
-        publicKey: {
-          challenge,
-          rp: { 
-            name: 'ProgressPulse',
-            id: window.location.hostname || 'progresspulse.app'
-          },
-          user: {
-            id: new TextEncoder().encode(userId),
-            name: userId,
-            displayName: 'ProgressPulse User'
-          },
-          pubKeyCredParams: [
-            { alg: -7, type: 'public-key' },  // ES256
-            { alg: -257, type: 'public-key' } // RS256
-          ],
-          authenticatorSelection: {
-            authenticatorAttachment: 'platform',
-            userVerification: 'required',
-            requireResidentKey: false
-          },
-          timeout: 60000,
-          attestation: 'none'
+        try {
+          console.log('🔐 Trying WebAuthn setup...');
+          
+          // Check if platform authenticator is available
+          const available = await (navigator.credentials as any).isUserVerifyingPlatformAuthenticatorAvailable?.();
+          if (!available) {
+            console.log('🔐 Platform authenticator not available');
+            return { success: false, error: 'Biometric authentication not available on this device' };
+          }
+          
+          // Generate secure challenge
+          const challenge = crypto.getRandomValues(new Uint8Array(32));
+          const userIdBytes = new TextEncoder().encode(userId);
+          
+          console.log('🔐 Creating WebAuthn credential...');
+          const credential = await navigator.credentials.create({
+            publicKey: {
+              challenge,
+              rp: { 
+                name: 'ProgressPulse',
+                id: window.location.hostname === 'localhost' ? 'localhost' : window.location.hostname
+              },
+              user: {
+                id: userIdBytes,
+                name: userId,
+                displayName: 'ProgressPulse User'
+              },
+              pubKeyCredParams: [
+                { alg: -7, type: 'public-key' },   // ES256
+                { alg: -257, type: 'public-key' }  // RS256
+              ],
+              authenticatorSelection: {
+                authenticatorAttachment: 'platform',
+                userVerification: 'required',
+                requireResidentKey: false
+              },
+              timeout: 60000,
+              attestation: 'none'
+            }
+          });
+
+          if (credential && 'rawId' in credential) {
+            const credentialData = {
+              credentialId: Array.from(new Uint8Array(credential.rawId as ArrayBuffer)),
+              method: 'webauthn',
+              enabled: true,
+              setupTime: Date.now()
+            };
+            
+            localStorage.setItem(`biometric_${userId}`, JSON.stringify(credentialData));
+            console.log('🔐 WebAuthn setup successful');
+            return { success: true };
+          }
+        } catch (error: any) {
+          console.log('🔐 WebAuthn setup failed:', error);
+          
+          // Handle specific WebAuthn errors
+          if (error.name === 'NotAllowedError') {
+            return { success: false, error: 'Biometric setup was cancelled' };
+          } else if (error.name === 'NotSupportedError') {
+            return { success: false, error: 'Biometric authentication not supported' };
+          } else if (error.name === 'SecurityError') {
+            return { success: false, error: 'Security error - please try again' };
+          }
+          
+          return { success: false, error: 'Failed to setup biometric authentication' };
         }
-      });
-
-      if (credential && 'rawId' in credential) {
-        localStorage.setItem(`biometric_${userId}`, JSON.stringify({
-          credentialId: Array.from(new Uint8Array(credential.rawId as ArrayBuffer)),
-          enabled: true
-        }));
-        return { success: true };
-      }
-
-        return { success: false, error: 'Failed to setup fingerprint' };
       }
       
       return { success: false, error: 'No biometric method available' };
-    } catch (error) {
-      return { success: false, error: 'Fingerprint setup cancelled or failed' };
+    } catch (error: any) {
+      console.error('🔐 Biometric setup error:', error);
+      return { success: false, error: error.message || 'Biometric setup failed' };
     }
   }
 
   async verifyFingerprint(userId: string): Promise<{ success: boolean; error?: string }> {
     try {
+      console.log('🔐 Verifying biometric authentication for:', userId);
+      
       const stored = localStorage.getItem(`biometric_${userId}`);
       if (!stored) {
-        return { success: false, error: 'No fingerprint setup found' };
+        return { success: false, error: 'No biometric authentication setup found' };
       }
 
       const biometricData = JSON.parse(stored);
+      console.log('🔐 Using biometric method:', biometricData.method);
       
       // Handle APK-specific biometric methods
       if (biometricData.method === 'capacitor' && (window as any).Capacitor && (window as any).BiometricAuth) {
         try {
+          console.log('🔐 Verifying with Capacitor biometric...');
           const result = await (window as any).BiometricAuth.verify({
             reason: 'Authenticate to access ProgressPulse',
             title: 'Biometric Authentication',
             subtitle: 'Use your fingerprint or face to unlock',
             description: 'Place your finger on the sensor or look at the camera'
           });
+          console.log('🔐 Capacitor verification result:', result);
           return { success: result.verified };
         } catch (error) {
+          console.log('🔐 Capacitor verification failed:', error);
           return { success: false, error: 'Biometric verification failed' };
         }
       }
       
       if (biometricData.method === 'cordova' && (window as any).cordova && (window as any).FingerprintAuth) {
         try {
+          console.log('🔐 Verifying with Cordova fingerprint...');
           await new Promise((resolve, reject) => {
             (window as any).FingerprintAuth.show({
               clientId: 'ProgressPulse',
               clientSecret: 'password'
             }, resolve, reject);
           });
+          console.log('🔐 Cordova verification successful');
           return { success: true };
         } catch (error) {
+          console.log('🔐 Cordova verification failed:', error);
           return { success: false, error: 'Fingerprint verification failed' };
         }
       }
-      
-      if (biometricData.method === 'android' && (window as any).AndroidBiometric) {
+
+      // WebAuthn verification
+      if (biometricData.method === 'webauthn' && biometricData.credentialId) {
         try {
-          const result = await (window as any).AndroidBiometric.authenticate({
-            title: 'Authenticate',
-            subtitle: 'Use your biometric to unlock ProgressPulse'
+          console.log('🔐 Verifying with WebAuthn...');
+          
+          const { credentialId } = biometricData;
+          const challenge = crypto.getRandomValues(new Uint8Array(32));
+          
+          const assertion = await navigator.credentials.get({
+            publicKey: {
+              challenge,
+              allowCredentials: [{
+                id: new Uint8Array(credentialId),
+                type: 'public-key'
+              }],
+              userVerification: 'required',
+              timeout: 60000,
+              rpId: window.location.hostname === 'localhost' ? 'localhost' : window.location.hostname
+            }
           });
-          return { success: result.success };
-        } catch (error) {
-          return { success: false, error: 'Android biometric verification failed' };
-        }
-      }
 
-      // Fallback to WebAuthn
-      if (biometricData.credentialId) {
-        const { credentialId } = biometricData;
-        const challenge = crypto.getRandomValues(new Uint8Array(32));
-        
-        const assertion = await navigator.credentials.get({
-        publicKey: {
-          challenge,
-          allowCredentials: [{
-            id: new Uint8Array(credentialId),
-            type: 'public-key'
-          }],
-          userVerification: 'required',
-          timeout: 60000,
-          rpId: window.location.hostname || 'progresspulse.app'
+          if (assertion) {
+            console.log('🔐 WebAuthn verification successful');
+            return { success: true };
+          } else {
+            console.log('🔐 WebAuthn verification failed - no assertion');
+            return { success: false, error: 'Biometric verification failed' };
+          }
+        } catch (error: any) {
+          console.log('🔐 WebAuthn verification failed:', error);
+          
+          // Handle specific WebAuthn errors
+          if (error.name === 'NotAllowedError') {
+            return { success: false, error: 'Biometric verification was cancelled' };
+          } else if (error.name === 'SecurityError') {
+            return { success: false, error: 'Security error - please try again' };
+          }
+          
+          return { success: false, error: 'Biometric verification failed' };
         }
-      });
-
-        return assertion ? { success: true } : { success: false, error: 'Verification failed' };
       }
       
+      console.log('🔐 No valid biometric method found for verification');
       return { success: false, error: 'No valid biometric method found' };
-    } catch (error) {
-      return { success: false, error: 'Fingerprint verification failed' };
+    } catch (error: any) {
+      console.error('🔐 Biometric verification error:', error);
+      return { success: false, error: error.message || 'Biometric verification failed' };
     }
   }
 
