@@ -4,12 +4,13 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  publicDir: 'public',
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,json}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/images\.pexels\.com\/.*/i,
@@ -24,7 +25,15 @@ export default defineConfig({
           },
         ],
       },
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: [
+        'favicon.ico', 
+        'apple-touch-icon.png', 
+        'mask-icon.svg',
+        'version.json',
+        'update-manifest.json',
+        'sw-notifications.js',
+        'sw-push.js'
+      ],
       manifest: {
         name: 'ProgressPulse - Smart Progress Tracker',
         short_name: 'ProgressPulse',

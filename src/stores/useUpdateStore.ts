@@ -105,6 +105,7 @@ export const useUpdateStore = create<UpdateState>()(
           let currentVersion = '1.0.0'; // fallback
           
           try {
+            console.log('🔍 Fetching version from:', window.location.origin + '/version.json');
             const versionResponse = await fetch('/version.json?' + Date.now(), {
               cache: 'no-cache',
               headers: {
@@ -113,20 +114,25 @@ export const useUpdateStore = create<UpdateState>()(
               }
             });
             
+            console.log('📡 Version response status:', versionResponse.status);
+            
             if (versionResponse.ok) {
               const versionData = await versionResponse.json();
               currentVersion = versionData.version;
               setCurrentVersion(currentVersion); // Update store
               console.log('📦 Current deployed version:', currentVersion);
+            } else {
+              console.log('❌ Version fetch failed:', versionResponse.status, versionResponse.statusText);
             }
           } catch (error) {
-            console.log('⚠️ Could not get current version, using fallback:', currentVersion);
+            console.log('⚠️ Could not get current version, using fallback:', currentVersion, error);
           }
           
           // Simulate network delay
           await new Promise(resolve => setTimeout(resolve, 1000));
           
           // Check for updates from the manifest
+          console.log('🔍 Fetching update manifest from:', window.location.origin + '/update-manifest.json');
           const response = await fetch('/update-manifest.json?' + Date.now(), {
             cache: 'no-cache',
             headers: {
@@ -135,8 +141,10 @@ export const useUpdateStore = create<UpdateState>()(
             }
           });
           
+          console.log('📡 Update manifest response status:', response.status);
+          
           if (!response.ok) {
-            throw new Error('Failed to check for updates');
+            throw new Error(`Failed to check for updates: ${response.status} ${response.statusText}`);
           }
           
           const updateInfo: UpdateInfo = await response.json();
