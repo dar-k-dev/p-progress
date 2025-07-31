@@ -4,7 +4,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "1.0.3",
+  "version": "1.0.9",
   "type": "module",
   "description": "A modern PWA for tracking progress and achieving goals with iPhone-style design",
   "keywords": [
@@ -54,9 +54,15 @@
     "deploy": "npm run build && npm run publish-update",
     "prepublishOnly": "npm run build",
     "npm-publish": "npm publish",
-    "npm-publish-patch": "npm version patch && npm publish",
-    "npm-publish-minor": "npm version minor && npm publish",
-    "npm-publish-major": "npm version major && npm publish"
+    "npm-publish-patch": "npm version patch && npm run generate-manifest && npm run build && npm publish",
+    "deploy-update": "node scripts/deploy-update.cjs",
+    "generate-manifest": "node scripts/generate-update-manifest.cjs",
+    "verify-deployment": "node scripts/verify-deployment.cjs",
+    "test-update-flow": "node scripts/test-update-flow.cjs",
+    "simulate-update-test": "node scripts/simulate-update-test.cjs",
+    "setup-github": "node scripts/setup-github-deploy.cjs",
+    "npm-publish-minor": "npm version minor && npm run generate-manifest && npm run build && npm publish",
+    "npm-publish-major": "npm version major && npm run generate-manifest && npm run build && npm publish"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

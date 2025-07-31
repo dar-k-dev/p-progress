@@ -115,7 +115,7 @@ npm run dev
 npm install progresspulse-pwa
 cp -r node_modules/progresspulse-pwa/* ./my-project/
 cd my-project
-npm install
+npm install 
 npm run dev
 ```
 

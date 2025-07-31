@@ -1,18 +1,22 @@
 {
-  "version": "1.0.3",
-  "timestamp": "2025-07-30T18:39:15.154Z",
+  "version": "1.0.9",
+  "timestamp": "2025-07-31T14:32:21.542Z",
   "changes": [
-    "Performance improvements and bug fixes",
-    "Enhanced iPhone-style animations",
-    "Improved user experience"
+    "🚀 Enhanced APK notification support",
+    "🔔 Background daily reminders",
+    "📱 Auto permission requests for APK",
+    "⚡ Improved performance and stability",
+    "🎯 Better offline support"
   ],
-  "downloadUrl": "/updates/1.0.3",
-  "size": 3558792,
+  "downloadUrl": "https://registry.npmjs.org/progresspulse-pwa/-/progresspulse-pwa-1.0.9.tgz",
+  "size": 2097152,
   "critical": false,
   "rollout": {
     "percentage": 100,
     "regions": [
-      "all"
+      "global"
     ]
-  }
+  },
+  "buildHash": "79eea642df2d498d",
+  "deploymentTime": 1753972341550
 }

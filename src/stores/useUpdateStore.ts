@@ -2,6 +2,26 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { pushNotificationService } from '@/services/pushNotificationService';
 
+// Helper function to compare semantic versions
+function isNewerVersion(newVersion: string, currentVersion: string): boolean {
+  const parseVersion = (version: string) => {
+    return version.split('.').map(num => parseInt(num, 10));
+  };
+  
+  const newParts = parseVersion(newVersion);
+  const currentParts = parseVersion(currentVersion);
+  
+  for (let i = 0; i < Math.max(newParts.length, currentParts.length); i++) {
+    const newPart = newParts[i] || 0;
+    const currentPart = currentParts[i] || 0;
+    
+    if (newPart > currentPart) return true;
+    if (newPart < currentPart) return false;
+  }
+  
+  return false;
+}
+
 export interface UpdateInfo {
   version: string;
   timestamp: string;
@@ -51,6 +71,7 @@ interface UpdateState {
   // Internal actions
   setUpdateProgress: (progress: Partial<UpdateProgress>) => void;
   setAvailableUpdate: (update: UpdateInfo | null) => void;
+  setCurrentVersion: (version: string) => void;
   addToHistory: (update: UpdateInfo) => void;
 }
 
@@ -75,16 +96,44 @@ export const useUpdateStore = create<UpdateState>()(
 
       // Actions
       checkForUpdates: async () => {
-        const { setUpdateProgress, setAvailableUpdate, currentVersion } = get();
+        const { setUpdateProgress, setAvailableUpdate, setCurrentVersion } = get();
         
         try {
           setUpdateProgress({ phase: 'checking', progress: 0 });
+          
+          // Get current version from deployed version.json
+          let currentVersion = '1.0.0'; // fallback
+          
+          try {
+            const versionResponse = await fetch('/version.json?' + Date.now(), {
+              cache: 'no-cache',
+              headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+              }
+            });
+            
+            if (versionResponse.ok) {
+              const versionData = await versionResponse.json();
+              currentVersion = versionData.version;
+              setCurrentVersion(currentVersion); // Update store
+              console.log('📦 Current deployed version:', currentVersion);
+            }
+          } catch (error) {
+            console.log('⚠️ Could not get current version, using fallback:', currentVersion);
+          }
           
           // Simulate network delay
           await new Promise(resolve => setTimeout(resolve, 1000));
           
           // Check for updates from the manifest
-          const response = await fetch('/update-manifest.json?' + Date.now());
+          const response = await fetch('/update-manifest.json?' + Date.now(), {
+            cache: 'no-cache',
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
+            }
+          });
           
           if (!response.ok) {
             throw new Error('Failed to check for updates');
@@ -92,8 +141,14 @@ export const useUpdateStore = create<UpdateState>()(
           
           const updateInfo: UpdateInfo = await response.json();
           
-          // Compare versions (simple string comparison for demo)
-          if (updateInfo.version !== currentVersion) {
+          // Compare versions properly
+          console.log('🔍 Version check:', { 
+            current: currentVersion, 
+            available: updateInfo.version,
+            isNewer: isNewerVersion(updateInfo.version, currentVersion)
+          });
+          
+          if (isNewerVersion(updateInfo.version, currentVersion)) {
             setAvailableUpdate(updateInfo);
             setUpdateProgress({ phase: 'idle', progress: 100 });
             
@@ -254,6 +309,10 @@ export const useUpdateStore = create<UpdateState>()(
 
       setAvailableUpdate: (update: UpdateInfo | null) => {
         set({ availableUpdate: update });
+      },
+
+      setCurrentVersion: (version: string) => {
+        set({ currentVersion: version });
       },
 
       addToHistory: (update: UpdateInfo) => {

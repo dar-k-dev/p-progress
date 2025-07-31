@@ -211,18 +211,30 @@ async function checkForUpdates() {
   }
 }
 
-// Get current version from storage
+// Get current version from storage or package info
 async function getCurrentVersion() {
   try {
+    // First try to get from version.json
     const cache = await caches.open(CACHE_NAME);
     const response = await cache.match('/version.json');
     if (response) {
       const data = await response.json();
+      console.log('🔔 SW: Current version from cache:', data.version);
       return data.version;
     }
+    
+    // Fallback: try to get from update manifest
+    const manifestResponse = await fetch('/update-manifest.json');
+    if (manifestResponse.ok) {
+      const manifest = await manifestResponse.json();
+      console.log('🔔 SW: Current version from manifest:', manifest.version);
+      return manifest.version;
+    }
   } catch (error) {
-    console.error('Error getting current version:', error);
+    console.error('🔔 SW: Error getting current version:', error);
   }
+  
+  console.log('🔔 SW: Using fallback version');
   return '1.0.0'; // fallback
 }
 
