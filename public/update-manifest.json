@@ -1,6 +1,6 @@
 {
-  "version": "1.0.10",
-  "timestamp": "2025-07-31T14:49:40.688Z",
+  "version": "1.0.11",
+  "timestamp": "2025-07-31T15:49:31.978Z",
   "changes": [
     "🚀 Enhanced APK notification support",
     "🔔 Background daily reminders",
@@ -8,7 +8,7 @@
     "⚡ Improved performance and stability",
     "🎯 Better offline support"
   ],
-  "downloadUrl": "https://registry.npmjs.org/progresspulse-pwa/-/progresspulse-pwa-1.0.10.tgz",
+  "downloadUrl": "https://registry.npmjs.org/progresspulse-pwa/-/progresspulse-pwa-1.0.11.tgz",
   "size": 2097152,
   "critical": false,
   "rollout": {
@@ -17,6 +17,6 @@
       "global"
     ]
   },
-  "buildHash": "3c0406a969d7c7c6",
-  "deploymentTime": 1753973380711
+  "buildHash": "6028444510d8dc37",
+  "deploymentTime": 1753976971994
 }
