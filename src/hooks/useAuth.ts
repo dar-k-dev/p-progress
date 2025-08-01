@@ -22,7 +22,9 @@ export function useAuth() {
     return await authService.signUp(email, name, password);
   };
 
-
+  const signIn = async (email: string, password: string) => {
+    return await authService.signIn(email, password);
+  };
 
   const signOut = async () => {
     await authService.signOut();
@@ -61,6 +63,7 @@ export function useAuth() {
     loading,
     isAuthenticated: !!user,
     signUp,
+    signIn,
     signOut,
     changePassword,
     deleteAccount,

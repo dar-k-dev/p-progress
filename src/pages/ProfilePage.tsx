@@ -276,19 +276,20 @@ export function ProfilePage() {
           className="space-y-6"
         >
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Shield className="h-5 w-5 mr-2" />
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center text-base">
+                <Shield className="h-4 w-4 mr-2" />
                 Security
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Manage your account security settings
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2">
               <Button 
                 variant="outline" 
-                className="w-full justify-start"
+                className="w-full justify-start h-9"
+                size="sm"
                 onClick={() => setShowPasswordDialog(true)}
               >
                 <Shield className="h-4 w-4 mr-2" />
@@ -298,16 +299,16 @@ export function ProfilePage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Lock className="h-5 w-5 mr-2" />
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center text-base">
+                <Lock className="h-4 w-4 mr-2" />
                 Biometric Security
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-sm">
                 Setup PIN and fingerprint authentication
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Lock className="h-4 w-4" />
@@ -317,7 +318,7 @@ export function ProfilePage() {
                   {hasPIN ? (
                     <>
                       <span className="text-xs text-green-600">Enabled</span>
-                      <Button variant="outline" size="sm" onClick={handleRemovePIN}>
+                      <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={handleRemovePIN}>
                         Remove
                       </Button>
                     </>
@@ -336,7 +337,7 @@ export function ProfilePage() {
                   {hasFingerprint ? (
                     <>
                       <span className="text-xs text-green-600">Enabled</span>
-                      <Button variant="outline" size="sm" onClick={handleRemoveFingerprint}>
+                      <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={handleRemoveFingerprint}>
                         Remove
                       </Button>
                     </>
@@ -348,7 +349,8 @@ export function ProfilePage() {
               
               <Button 
                 variant="outline" 
-                className="w-full justify-start"
+                className="w-full justify-start h-9"
+                size="sm"
                 onClick={() => setShowBiometricSetup(true)}
               >
                 <Shield className="h-4 w-4 mr-2" />
@@ -358,16 +360,17 @@ export function ProfilePage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Data Management</CardTitle>
-              <CardDescription>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Data Management</CardTitle>
+              <CardDescription className="text-sm">
                 Export or delete your account data
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2">
               <Button 
                 variant="outline" 
-                className="w-full justify-start"
+                className="w-full justify-start h-9"
+                size="sm"
                 onClick={handleExportData}
               >
                 <Download className="h-4 w-4 mr-2" />
@@ -405,14 +408,14 @@ export function ProfilePage() {
 
           {/* Password Change Dialog */}
           <AlertDialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
-            <AlertDialogContent>
+            <AlertDialogContent className="max-w-md">
               <AlertDialogHeader>
-                <AlertDialogTitle>Change Password</AlertDialogTitle>
-                <AlertDialogDescription>
+                <AlertDialogTitle className="text-lg">Change Password</AlertDialogTitle>
+                <AlertDialogDescription className="text-sm">
                   Enter your current password and choose a new one.
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <div className="space-y-4 py-4">
+              <div className="space-y-3 py-3">
                 <div className="space-y-2">
                   <Label htmlFor="currentPassword">Current Password</Label>
                   <Input

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,19 +22,32 @@ const signUpSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const signInSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
+
 type SignUpFormData = z.infer<typeof signUpSchema>;
+type SignInFormData = z.infer<typeof signInSchema>;
 
 export function AuthForm() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signUp, getPasswordStrength } = useAuth();
+  const [isSignUp, setIsSignUp] = useState(location.pathname === '/signup');
+  const { signUp, signIn, getPasswordStrength } = useAuth();
 
-  const { register, handleSubmit, watch, formState: { errors }, setError } = useForm<SignUpFormData>({
-    resolver: zodResolver(signUpSchema),
+  useEffect(() => {
+    setIsSignUp(location.pathname === '/signup');
+  }, [location.pathname]);
+
+  const { register, handleSubmit, watch, formState: { errors }, setError, reset } = useForm<SignUpFormData | SignInFormData>({
+    resolver: zodResolver(isSignUp ? signUpSchema : signInSchema),
   });
 
   const password = watch('password');
-  const passwordStrength = password ? getPasswordStrength(password) : null;
+  const passwordStrength = password && isSignUp ? getPasswordStrength(password) : null;
 
   const getPasswordStrengthScore = () => {
     if (!passwordStrength) return 0;
@@ -45,14 +59,21 @@ export function AuthForm() {
     }
   };
 
-  const onSubmit = async (data: SignUpFormData) => {
+  const onSubmit = async (data: SignUpFormData | SignInFormData) => {
     setLoading(true);
     
     try {
-      const result = await signUp(data.email, data.name, data.password);
+      let result;
+      if (isSignUp) {
+        const signUpData = data as SignUpFormData;
+        result = await signUp(signUpData.email, signUpData.name, signUpData.password);
+      } else {
+        const signInData = data as SignInFormData;
+        result = await signIn(signInData.email, signInData.password);
+      }
       
       if (!result.success) {
-        setError('email', { message: result.error || 'Failed to create account' });
+        setError('email', { message: result.error || `Failed to ${isSignUp ? 'create account' : 'sign in'}` });
       }
     } catch (error) {
       console.error('Auth error:', error);
@@ -62,46 +83,59 @@ export function AuthForm() {
     }
   };
 
+  const toggleMode = () => {
+    const newPath = isSignUp ? '/signin' : '/signup';
+    navigate(newPath);
+    reset();
+    setShowPassword(false);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-md mx-auto"
+      className="w-full max-w-sm mx-auto"
     >
-      <Card className="shadow-2xl border-0 bg-card/95 backdrop-blur-lg">
-        <CardHeader className="text-center space-y-4">
+      <Card className="shadow-lg border bg-card/95 backdrop-blur-lg">
+        <CardHeader className="text-center space-y-3 pb-4">
           <motion.div
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
-            className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center"
+            className="mx-auto w-12 h-12 bg-primary rounded-xl flex items-center justify-center"
           >
-            <Target className="w-8 h-8 text-primary-foreground" />
+            <Target className="w-6 h-6 text-primary-foreground" />
           </motion.div>
           
           <div>
-            <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
-            <CardDescription>Start your progress tracking journey</CardDescription>
+            <CardTitle className="text-xl font-bold">
+              {isSignUp ? 'Create Account' : 'Welcome Back'}
+            </CardTitle>
+            <CardDescription className="text-sm">
+              {isSignUp ? 'Start your progress tracking journey' : 'Sign in to continue your progress'}
+            </CardDescription>
           </div>
         </CardHeader>
 
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <div className="relative">
-                <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Enter your full name"
-                  className="pl-10"
-                  {...register('name')}
-                />
+        <CardContent className="pt-2">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <div className="relative">
+                  <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    className="pl-10"
+                    {...register('name')}
+                  />
+                </div>
+                {isSignUp && 'name' in errors && errors.name && (
+                  <p className="text-sm text-destructive">{errors.name.message}</p>
+                )}
               </div>
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
-            </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -146,7 +180,7 @@ export function AuthForm() {
                 </Button>
               </div>
               
-              {password && (
+              {password && isSignUp && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>Password strength</span>
@@ -164,26 +198,28 @@ export function AuthForm() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="confirmPassword"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Confirm your password"
-                  className="pl-10"
-                  {...register('confirmPassword')}
-                />
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Confirm your password"
+                    className="pl-10"
+                    {...register('confirmPassword')}
+                  />
+                </div>
+                {isSignUp && 'confirmPassword' in errors && errors.confirmPassword && (
+                  <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+                )}
               </div>
-              {errors.confirmPassword && (
-                <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
-              )}
-            </div>
+            )}
 
             <Button 
               type="submit" 
-              className="w-full h-11"
+              className="w-full h-10"
               disabled={loading}
             >
               {loading ? (
@@ -193,9 +229,23 @@ export function AuthForm() {
                   className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
                 />
               ) : (
-                'Create Account'
+                isSignUp ? 'Create Account' : 'Sign In'
               )}
             </Button>
+
+            <div className="text-center">
+              <Button
+                type="button"
+                variant="link"
+                onClick={toggleMode}
+                className="text-sm text-muted-foreground hover:text-primary"
+              >
+                {isSignUp 
+                  ? 'Already have an account? Sign in' 
+                  : "Don't have an account? Create one"
+                }
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

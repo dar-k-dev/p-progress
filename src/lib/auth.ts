@@ -74,6 +74,29 @@ export class AuthService {
     }
   }
 
+  async signIn(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const user = await db.getUserByEmail(email);
+      if (!user) {
+        return { success: false, error: 'No account found with this email' };
+      }
+
+      if (user.passwordHash !== btoa(password)) {
+        return { success: false, error: 'Invalid password' };
+      }
+
+      this.setCurrentUser(user);
+      toast.success('Signed in successfully!');
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 100);
+      return { success: true };
+    } catch (error) {
+      console.error('Sign in error:', error);
+      return { success: false, error: 'Failed to sign in' };
+    }
+  }
+
   async signOut(): Promise<void> {
     this.setCurrentUser(null);
     localStorage.removeItem(CURRENT_USER_KEY);

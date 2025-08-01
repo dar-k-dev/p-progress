@@ -28,7 +28,6 @@ import { TermsPage } from '@/pages/TermsPage';
 import { ReleasesPage } from '@/pages/ReleasesPage';
 import { SupportPage } from '@/pages/SupportPage';
 import { LoadingScreen } from '@/components/ui/LoadingScreen';
-import { BiometricGuard } from '@/components/BiometricGuard';
 import { AnimatePresence } from 'framer-motion';
 
 // Service Worker registration is handled by the update system
@@ -100,43 +99,42 @@ function App() {
         <div className="w-full h-full min-h-screen bg-background text-foreground">
           <AnimatePresence mode="wait">
             {user ? (
-              <BiometricGuard>
-                <AppLayout>
-                  <Routes>
-                    <Route path="/dashboard" element={<DashboardPage />} />
-                    <Route path="/goals" element={<GoalsPage />} />
-                    <Route path="/progress" element={<ProgressPage />} />
-                    <Route path="/analytics" element={<AnalyticsPage />} />
-                    <Route path="/calendar" element={<CalendarPage />} />
-                    <Route path="/achievements" element={<AchievementsPage />} />
-                    <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
-                    <Route path="/notifications" element={<NotificationsPage />} />
-                    <Route path="/spreadsheet" element={<SpreadsheetPage />} />
-                    <Route path="/certificates" element={<CertificatesPage />} />
-                    <Route path="/tutorial" element={<TutorialPage />} />
-                    <Route path="/push-test" element={<PushTestPage />} />
-                    <Route path="/docs" element={<DocumentationPage />} />
-                    <Route path="/documentation" element={<DocumentationPage />} />
-                    <Route path="/privacy" element={<PrivacyPage />} />
-                    <Route path="/terms" element={<TermsPage />} />
-                    <Route path="/releases" element={<ReleasesPage />} />
-                    <Route path="/support" element={<SupportPage />} />
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                  </Routes>
-                </AppLayout>
-              </BiometricGuard>
+              <AppLayout>
+                <Routes>
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/goals" element={<GoalsPage />} />
+                  <Route path="/progress" element={<ProgressPage />} />
+                  <Route path="/analytics" element={<AnalyticsPage />} />
+                  <Route path="/calendar" element={<CalendarPage />} />
+                  <Route path="/achievements" element={<AchievementsPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/notifications" element={<NotificationsPage />} />
+                  <Route path="/spreadsheet" element={<SpreadsheetPage />} />
+                  <Route path="/certificates" element={<CertificatesPage />} />
+                  <Route path="/tutorial" element={<TutorialPage />} />
+                  <Route path="/push-test" element={<PushTestPage />} />
+                  <Route path="/docs" element={<DocumentationPage />} />
+                  <Route path="/documentation" element={<DocumentationPage />} />
+                  <Route path="/privacy" element={<PrivacyPage />} />
+                  <Route path="/terms" element={<TermsPage />} />
+                  <Route path="/releases" element={<ReleasesPage />} />
+                  <Route path="/support" element={<SupportPage />} />
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              </AppLayout>
             ) : (
               <Routes>
                 <Route path="/signup" element={<AuthPage />} />
-                <Route path="/auth" element={<Navigate to="/signup" replace />} />
+                <Route path="/signin" element={<AuthPage />} />
+                <Route path="/auth" element={<Navigate to="/signin" replace />} />
                 {/* Public pages - accessible without authentication */}
                 <Route path="/privacy" element={<PrivacyPage />} />
                 <Route path="/terms" element={<TermsPage />} />
                 <Route path="/releases" element={<ReleasesPage />} />
                 <Route path="/support" element={<SupportPage />} />
-                <Route path="*" element={<Navigate to="/signup" replace />} />
+                <Route path="*" element={<Navigate to="/signin" replace />} />
               </Routes>
             )}
           </AnimatePresence>
